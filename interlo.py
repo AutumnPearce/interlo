@@ -118,15 +118,15 @@ class Objectset:
         
         axs[0].set_xlabel("x Position", fontsize=16)
         axs[0].set_ylabel("y Position", fontsize=16)
-        axs[0].set_xlim([-15,15])
-        axs[0].set_ylim([-15,15])
-        axs[0].set_aspect(1)
+        #axs[0].set_xlim([-15,15])
+        #axs[0].set_ylim([-15,15])
+        #axs[0].set_aspect(1)
         
         axs[1].set_xlabel("r Position", fontsize=16)
         axs[1].set_ylabel("z Position", fontsize=16)
-        axs[1].set_xlim([0,15])
-        axs[1].set_ylim([-5,5])
-        axs[1].set_aspect(3/2)
+        #axs[1].set_xlim([4,12])
+        #axs[1].set_ylim([-2,2])
+        #axs[1].set_aspect(3/2)
         
         return fig, axs
 
@@ -171,13 +171,91 @@ class Starset(Objectset):
             
         self.has_isos = True
     
-    def plot_iso_orbits(self, alpha = .05, linewidth = .2):
+    def plot_iso_orbits(self, alpha = .04, linewidth = .2):
         import matplotlib.cm as cm
         figax = self.__setup_position_plot__()
-        colors = cm.rainbow(np.linspace(0, 1, self.num_stars))
+        colors = cm.BuPu(np.linspace(.3, 1, self.num_stars))
         for i,star in enumerate(self.stars):
             figax = star.isoset.plot_orbit(visualize = False, figax = figax, color = colors[i], alpha = alpha, linewidth = linewidth)
         plt.show()
+
+    def animate_positions(self, frames=None, figsize=(20, 10), interval=40, type='matplotlib', visualize=True):
+        if type == 'matplotlib':
+            if frames is None:
+                frames = self.timesteps
+
+            fig, axs = self.__setup_position_plot__(figsize)
+            
+            time = 0*u.Gyr
+            scat1 = axs[0].scatter(self.orbits.x(time),self.orbits.y(time),color='teal')
+            scat2 = axs[1].scatter(self.orbits.r(time),self.orbits.z(time),color='teal')
+            
+            def update(time):
+                xy = np.array([self.orbits.x(time),self.orbits.y(time)]).T
+                scat1.set_offsets(xy)
+                
+                rz = np.array([self.orbits.r(time),self.orbits.z(time)]).T
+                scat2.set_offsets(rz)
+            
+            skip = int(self.timesteps/frames)
+            anim = animation.FuncAnimation(fig, update, frames = self.times[::skip], interval = interval)
+            plt.close()
+
+        elif type == 'celluloid':
+            from celluloid import Camera
+            fig, axs = self.__setup_position_plot__(figsize)
+            camera = Camera(fig)
+            for time in self.times:
+                axs[0].scatter(self.orbits.x(time),self.orbits.y(time))
+                axs[1].scatter(self.orbits.r(time),self.orbits.z(time))
+                camera.snap()
+            anim = camera.animate()
+
+        if not visualize:
+            return anim
+        elif visualize:
+            from IPython.display import HTML
+            return HTML(anim.to_html5_video())
+
+    def animate_iso_positions(self, frames=None, figsize=(20, 10), interval=40, type='celluloid', visualize=True):
+        if type == 'matplotlib':
+            if frames is None:
+                frames = self.timesteps
+
+            fig, axs = self.__setup_position_plot__(figsize)
+            time = 0*u.Gyr
+            scat1 = axs[0].scatter(self.orbits.x(time),self.orbits.y(time),color='teal')
+            scat2 = axs[1].scatter(self.orbits.r(time),self.orbits.z(time),color='teal')
+            
+            def update(time):
+                xy = np.array([self.orbits.x(time),self.orbits.y(time)]).T
+                scat1.set_offsets(xy)
+                
+                rz = np.array([self.orbits.r(time),self.orbits.z(time)]).T
+                scat2.set_offsets(rz)
+            
+            skip = int(self.timesteps/frames)
+            anim = animation.FuncAnimation(fig, update, frames = self.times[::skip], interval = interval)
+            plt.close()
+
+        elif type == 'celluloid':
+            from celluloid import Camera
+            import matplotlib.cm as cm
+            fig, axs = self.__setup_position_plot__(figsize)
+            colors = cm.BuPu(np.linspace(.3, 1, self.num_stars))
+            camera = Camera(fig)
+            for time in self.times:
+                for i,star in enumerate(self.stars):
+                    axs[0].scatter(star.isoset.orbits.x(time), star.isoset.orbits.y(time), color = colors[i], s=10, alpha=.9)
+                    axs[1].scatter(star.isoset.orbits.r(time), star.isoset.orbits.z(time), color = colors[i], s=10, alpha=.9)
+                camera.snap()
+            anim = camera.animate(interval = 40)
+
+        if not visualize:
+            return anim
+        elif visualize:
+            from IPython.display import HTML
+            return HTML(anim.to_html5_video())
 
     def __get_star_orbits__(self):
         # Generate spherical polar coordinates (r, theta, phi)
@@ -246,6 +324,7 @@ class Star:
 
     def get_isos(self, num_isos = 100, v_eject = 1):
         self.isoset = ISOset(self, num_isos, v_eject)
+        return self.isoset.orbits
 
 class ISOset(Objectset):
     def __init__(self, star, num_isos = 100, v_eject = 1):
