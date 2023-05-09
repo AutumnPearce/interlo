@@ -15,7 +15,21 @@ from galpy.orbit import Orbit
 from galpy.potential import MWPotential2014
 
 class Objectset:
+    """
+        A class to hold and manipulate a set of objects' orbits.
+
+        Attributes:
+            orbits (Orbit): an Orbit instance holding the orbits of the objects.
+            num_objs (int): number of objects in the set.
+            time (astropy Quantity): the length of time for which the orbits have been integrated.
+            timesteps (int): number of timesteps used for integration.
+            times (astropy Quantity): an array of times for which the orbits are integrated.
+            integrated (bool): whether the orbits have been integrated.
+    """
+        
+    
     def __init__(self, orbits):
+        """Initializes an Objectset instance with the given Orbit instance(s)."""
         self.orbits = orbits
         self.num_objs = orbits.shape[0]
 
@@ -26,6 +40,15 @@ class Objectset:
         self.integrated = False
 
     def integrate(self, time=5*u.Gyr, timesteps = 500):
+        """
+            Integrates the orbits using the given time and timesteps.
+            Args:
+                time (astropy Quantity): the length of time for which the orbits have been integrated.
+                timesteps (int): the number of timesteps to use for integration.
+            Returns:
+                self (Objectset): the Objectset instance with the integrated orbits.
+        """
+        
         self.time = time
         self.timesteps=timesteps
         self.times = np.linspace(0, self.time.value, self.timesteps) * self.time.unit
@@ -37,6 +60,16 @@ class Objectset:
         return self
 
     def plot_position(self, time = 0*u.Gyr, display = True):
+        """
+            Plots the positions of the objects at the given time.
+            Args:
+                time (astropy Quantity): the time at which to plot the positions.
+                display (bool): whether to display the plot or not.
+            Returns:
+                fig (matplotlib Figure): the Figure instance of the plot.
+                axs (numpy array): an array of Axes instances of the plot.
+        """
+        
         fig,axs = self.__setup_position_plot__()
         
         axs[0].scatter(self.orbits.x(time), self.orbits.y(time), s = 25)
@@ -48,6 +81,18 @@ class Objectset:
         return fig,axs
     
     def animate_position(self, frames = None, figsize = (20,10), interval = 40, display = True):
+        """
+            Animates the positions of the objects.
+            Args:
+                frames (int): the number of frames to include in the animation.
+                figsize (tuple): the size of the Figure instance of the plot.
+                interval (int): the time between frames of the animation in milliseconds.
+                display (bool): whether to display the animation or not.
+            Returns:
+                anim (matplotlib animation): the animation instance if display=False.
+                HTML (IPython.display.HTML): the HTML representation of the animation if display=True.
+        """
+        
         if frames is None:
             frames = self.timesteps
 
@@ -74,6 +119,19 @@ class Objectset:
             return HTML(anim.to_html5_video())
     
     def plot_orbit(self, visualize = True, figax = None, color = 'teal', alpha = .6, linewidth = .1):
+        """
+            Plots the orbit of each object.
+            Args:
+                visualize (bool): whether to display the plot or not.
+                figax (tuple): a tuple of the Figure instance and Axes instance of the plot.
+                color (str): the color of the orbit lines.
+                alpha (float): the opacity of the orbit lines.
+                linewidth (float): the width of the orbit lines.
+            Returns:
+                fig (matplotlib Figure): the Figure instance of the plot.
+                axs (numpy array): an array of Axes instances of the plot.
+        """
+        
         if figax is None:
             fig, axs = self.__setup_position_plot__()
         else:
@@ -90,6 +148,19 @@ class Objectset:
         return fig, axs
 
     def plot_radius(self, visualize = True, figax = None, color = 'teal', alpha = .6, linewidth = .1):
+        """
+            Plots the radius of each object.
+            Args:
+                visualize (bool): whether to display the plot or not.
+                figax (tuple): a tuple of the Figure instance and Axes instance of the plot.
+                color (str): the color of the radius lines.
+                alpha (float): the opacity of the radius lines.
+                linewidth (float): the width of the radius lines.
+            Returns:
+                fig (matplotlib Figure): the Figure instance of the plot.
+                axs (numpy array): an array of Axes instances of the plot.
+        """
+        
         if figax is None:
             fig, axs = plt.subplots(nrows = 1, ncols = 1, figsize = (10,5))
         else:
@@ -106,6 +177,12 @@ class Objectset:
             return fig,axs
 
     def __setup_position_plot__(self, figsize = (20,10)):
+        """
+            Sets up the figure for plotting the positions of the particles in the system.
+            Args:
+                figsize (tuple): Size of the figure in inches (width, height).
+        """
+        
         plt.rcParams["font.family"] = "sans"
         fig,axs = plt.subplots(nrows = 1, ncols = 2, figsize = figsize)
         
@@ -124,6 +201,12 @@ class Objectset:
         return fig, axs
 
     def plotly_3d(self, time = 0*u.Gyr):
+        """
+            Creates a 3D plot of the positions of the particles using Plotly.
+            Args:
+                time (astropy Quantity): the time at which to plot the positions.
+                
+        """
         import plotly
         import plotly.graph_objs as go
         #3d plotly plot of all objects
@@ -159,8 +242,43 @@ class Objectset:
         plotly.offline.iplot(plot_figure)
 
 class Starset(Objectset):
+    """
+        A class for generating a set of stars with certain parameters.
+
+        Attributes:
+            num_objs (int): The number of objects in the set.
+            num_stars (int): The number of stars in the set.
+            radial_dispersion (float): The standard deviation of the radial positions of the stars in kpc.
+            azimuthal_dispersion (float): The standard deviation of the azimuthal positions of the stars in degrees.
+            z_dispersion (float): The standard deviation of the vertical positions of the stars in kpc.
+            asymmetric_drift (float): The asymmetric drift of the stars in km/s.
+            r_extent (float): The radial extent of the stars in kpc (away from solar radius).
+            z_extent (float): The maximum vertical extent of the stars in kpc (away from the galactic plane).
+            orbits (Orbit): An array of orbits for the stars.
+            integrated (bool): Whether the orbits have been integrated yet.
+            has_isos (bool): Whether the starset has generated ISOs yet.
+            time (Quantity): The integration time.
+            times (Quantity): An array of times to integrate the orbits over.
+            timesteps (int): The number of timesteps.
+            isos (ISOset array): The ISOset that is associated with each star.
+            sun (Orbit): The orbit of the Sun.
+            num_per_star (int): The number of isochrone particles per star.
+            iso_orbits (Orbit): The orbits of the ISOs
+    """
     def __init__(self, num_stars = 10, radial_dispersion = 12, azimuthal_dispersion = 11,\
                  z_dispersion = 9, asymmetric_drift = 5, r_extent = .5, z_extent = .5):
+        """
+            Initialize a Starset instance.
+
+            Args:
+                num_stars (int): The number of stars in the set.
+                radial_dispersion (float): The standard deviation of the radial positions of the stars in kpc.
+                azimuthal_dispersion (float): The standard deviation of the azimuthal positions of the stars in degrees.
+                z_dispersion (float): The standard deviation of the vertical positions of the stars in kpc.
+                asymmetric_drift (float): The asymmetric drift of the stars in km/s.
+                r_extent (float): The maximum radial extent of the stars in kpc.
+                z_extent (float): The maximum vertical extent of the stars in kpc.
+        """
         self.num_objs = num_stars
         self.num_stars = num_stars
         self.radial_dispersion = radial_dispersion
@@ -179,10 +297,16 @@ class Starset(Objectset):
         self.timesteps = None
         self.isos = None
         self.sun = None
-        
-        #self.stars = [Star(coord) for coord in zip(coords_6d)]
-    
+
     def integrate(self, time=5*u.Gyr, timesteps = 500):
+        """
+            Integrate the orbits of the stars and ISOs
+
+            Args:
+                time (astropy Quantity): The integration time.
+                timesteps (int): The number of timesteps.
+        """
+        
         self.time = time
         self.timesteps=timesteps
         self.times = np.linspace(0, self.time.value, self.timesteps) * self.time.unit
@@ -197,7 +321,14 @@ class Starset(Objectset):
         self.integrated = True
     
     def get_isos(self, num_per_star = 100, v_eject = 1):
-        #star.get_isos(num_per_star, eject_vel) for star in self.stars
+        """
+            Get the isochrone sets for the stars.
+
+            Args:
+                num_per_star (int): The number of isochrone particles per star.
+                v_eject (float): The ejection velocity in km/s.
+        """
+         
         self.isos = np.empty(self.num_stars, dtype = ISOset)
         self.iso_orbits = np.empty(self.num_stars, dtype = Orbit)
         self.num_per_star = num_per_star
@@ -206,10 +337,21 @@ class Starset(Objectset):
         self.has_isos = True
     
     def get_sun(self):
+        """
+            Get the orbit of the Sun.
+        """
         self.sun = Orbit()
         self.sun.integrate(self.times, MWPotential2014)
 
     def get_near_sun(self, time = 0*u.Gyr, distance = 1):
+        """
+            Get the mask indices of the isos near the sun at a given time.
+            Args:
+                time (Quantity): time at which you want the nearby ISOs.
+                distance (float (kpc)): Distance away from sun that is considered "near".
+            Returns:
+                near_sun_isos (bool array): True for indices that are near the sun.
+        """
         x_sun = self.sun.x(time)
         y_sun = self.sun.y(time)
         z_sun = self.sun.z(time)
@@ -223,6 +365,15 @@ class Starset(Objectset):
         return near_sun_isos
 
     def get_rad_near_sun(self, time = 0*u.Gyr, distance = 1):
+        """
+            Gets the mean initial radius of the ISOs near the sun at a given time.
+            Args:
+                time (Quantity): time at which you want the mean radius
+                distance (float (kpc)): Distance away from sun that is considered "near".
+            Returns:
+                radius (float (kpc)): mean initial radius
+                count (int): number of nearby ISOs
+        """
         near_sun = self.get_near_sun(time, distance)
         r = 0
         count = np.count_nonzero(near_sun)
@@ -233,6 +384,21 @@ class Starset(Objectset):
         return r/count, count
 
     def plot_rad_near_sun(self, distance = 1, display = True, figax = None, color = 'teal', alpha = 1, linewidth = 1):
+        """
+            Plot the mean initial radius of ISOs near the sun over time.
+            Args:
+                distance (float (kpc)): Distance away from sun that is considered "near".
+                display (bool): If True, display the plot. If False, return the figure and axes.
+                figax (figure, axis): Can use your own preinitialized figure and axes.
+                color (str): matplotlib color for the lines on the plot
+                alpha (float): alpha value for lines on the plot
+                linewidth (float): linewidth for lines on plot
+            Returns:
+                ***if display is True, nothing is returned.***
+                figax (figure, axes): The figure and axes objects for the plot.
+
+        """
+        
         if figax is None:
             fig, axs = plt.subplots(nrows = 2, ncols = 1, figsize = (10,10))
         else:
@@ -255,19 +421,31 @@ class Starset(Objectset):
             return fig,axs
 
     def plot_iso_orbits(self, alpha = .02, linewidth = .1):
+        """
+            Plot and display the orbits of the ISOs
+            Args:
+                alpha (float): alpha value for lines on the plot
+                linewidth (float): linewidth for lines on plot
+        """
         figax = self.__setup_position_plot__()
         colors = cm.BuPu(np.linspace(.3, 1, self.num_stars))
         for i,isos in enumerate(self.isos):
             figax = isos.plot_orbit(visualize = False, figax = figax, color = colors[i], alpha = alpha, linewidth = linewidth)
         plt.show()
 
-    #currently relies on celluloid. fix later.
+    #currently relies on celluloid. This will be changed in future versions.
     def animate_position(self, frames=None, figsize=(20, 10), interval=40, display=True):
-        # anim = super().animate_position(frames, figsize, interval, display=False)
-
-        # for isoset in self.isos
-        #     iso_anim = isoset.animate_position(frames, figsize, interval, display=False)
-        #     anim = self.zip_anim(anim, iso_anim)
+        """
+            Animate the positions of all ISOs, and the sun if it is present.
+            Args:
+                frames (int): Optional number of frames in the animation.
+                figsize (float tuple): Size of the animation figure.
+                interval (int): interval of time between each frame in ms.
+                display (bool): if True, immediately displays the animation
+            Returns:
+                anim (matplotlib animation): the animation instance if display=False.
+                HTML (IPython.display.HTML): the HTML representation of the animation if display=True.
+        """
 
         from celluloid import Camera
 
@@ -293,6 +471,11 @@ class Starset(Objectset):
             return HTML(anim.to_html5_video())
 
     def __get_star_orbits__(self):
+        """
+            Create all of the orbit objects for the stars, based on the characteristics of the starset. 
+            Returns:
+                orbits (Orbit): star orbits
+        """
         # Generate spherical polar coordinates (r, theta, phi)
         # Input positions
         n_points = self.num_stars
@@ -347,7 +530,27 @@ class Starset(Objectset):
         return Orbit(coords) 
 
 class ISOset(Objectset):
+    """
+        A class for generating a set of ISOs that originate from a given star.
+        
+        Attributes:
+            num_isos (int): number of isos in the set
+            num_objs (int): number of isos in the set, defined differently for parent class
+            v_eject (float): ejection velocity
+            orbits (Orbit): orbits of the ISOs
+            integrated (bool): True if the ISOs have been integrated
+    """
+
     def __init__(self, star, num_isos = 100, v_eject = 1):
+        """
+            Initialize an instance of an ISOset.
+
+            Attributes:
+                star (Orbit): The orbit of the star that the ISOs are ejected from
+                num_isos (int): number of isos in the set, defined differently for parent class
+                v_eject (float): ejection velocity
+        """
+        
         self._star = star
         self.num_isos = num_isos
         self.num_objs = num_isos
@@ -356,6 +559,14 @@ class ISOset(Objectset):
         self.integrated = False
 
     def integrate(self, time=5*u.Gyr, timesteps = 500):
+        """
+            Integrate the orbits of the ISOs.
+
+            Args:
+                time (astropy Quantity): The integration time.
+                timesteps (int): The number of timesteps.
+        """
+        
         self.time = time
         self.timesteps=timesteps
         self.times = np.linspace(0, self.time.value, self.timesteps) * self.time.unit
@@ -364,6 +575,10 @@ class ISOset(Objectset):
         self.integrated = True
 
     def plot_ejection_velocities(self):
+        """
+            Make a 3d plotly plot of the initial ejection velocities, as a sanity check.
+        """
+        
         #Plot directions ejected to show points are evenly distributed
         import plotly
         import plotly.graph_objs as go
@@ -396,6 +611,11 @@ class ISOset(Objectset):
         plotly.offline.iplot(plot_figure)
 
     def __get_orbits__(self):
+        """
+            Create all of the orbit objects for the ISOs
+            Returns:
+                orbits (Orbit): ISO orbits
+        """
         v = [self._star.vx(), self._star.vy(), self._star.vz()]
         r = np.array([self._star.x(), self._star.y(), self._star.z()])
         
