@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='interlo',
-    version='1.0.2',
+    version='1.1.0',
     author='Autumn Pearce',
     description='Quickly create simulations of interstellar object motion through the milky way.',
     url='https://github.com/AutumnPearce/interlo',
