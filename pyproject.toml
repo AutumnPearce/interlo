@@ -1,0 +1,10 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "interlo"
+version = "1.1.0"
+classifiers = ["Programming Language :: Python"]
+dependencies = ["matplotlib","numpy","galpy","astropy"]
+requires-python = ">=3"
