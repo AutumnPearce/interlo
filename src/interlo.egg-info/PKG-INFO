@@ -1,0 +1,21 @@
+Metadata-Version: 2.1
+Name: interlo
+Version: 1.1.0
+Summary: Quickly create simulations of interstellar object motion through the milky way.
+Home-page: https://github.com/AutumnPearce/interlo
+Author: Autumn Pearce
+Keywords: iso,interstellar,gravitational,simulation
+Classifier: Programming Language :: Python
+Requires-Python: >=3.11
+License-File: LICENSE
+Requires-Dist: matplotlib
+Requires-Dist: numpy
+Requires-Dist: galpy
+Requires-Dist: astropy
+Provides-Extra: test
+Requires-Dist: pytest; extra == "test"
+Requires-Dist: coverage; extra == "test"
+Provides-Extra: display
+Requires-Dist: IPython; extra == "display"
+Requires-Dist: celluloid; extra == "display"
+Requires-Dist: plotly; extra == "display"

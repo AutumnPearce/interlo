@@ -1,0 +1,13 @@
+matplotlib
+numpy
+galpy
+astropy
+
+[display]
+IPython
+celluloid
+plotly
+
+[test]
+pytest
+coverage
