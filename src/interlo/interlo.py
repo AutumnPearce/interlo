@@ -12,7 +12,8 @@ from astropy.coordinates import SkyCoord
 
 import galpy
 from galpy.orbit import Orbit
-from galpy.potential import MWPotential2014
+from galpy.potential import MWPotential2014, ChandrasekharDynamicalFrictionForce
+from galpy.potential import ChandrasekharDynamicalFrictionForce as dynamFric
 
 class Objectset:
     """
@@ -39,7 +40,7 @@ class Objectset:
 
         self.integrated = False
 
-    def integrate(self, time=5*u.Gyr, timesteps = 500):
+    def integrate(self, time=5*u.Gyr, timesteps = 500, heating = False):
         """
             Integrates the orbits using the given time and timesteps.
             Args:
@@ -54,7 +55,12 @@ class Objectset:
         self.times = np.linspace(0, self.time.value, self.timesteps) * self.time.unit
 
         if self.integrated is False:
-            self.orbits.integrate(self.times, MWPotential2014)
+            if heating is True:
+                dyn_fric = dynamFric(GMs=100*u.kg, dens=MWPotential2014)
+                self.orbits.integrate(self.times, MWPotential2014 + dyn_fric)
+            else:
+                self.orbits.integrate(self.times, MWPotential2014)
+            
 
         self.integrated = True
         return self
@@ -298,7 +304,7 @@ class Starset(Objectset):
         self.isos = None
         self.sun = None
 
-    def integrate(self, time=5*u.Gyr, timesteps = 500):
+    def integrate(self, time=5*u.Gyr, timesteps = 500, heating = False):
         """
             Integrate the orbits of the stars and ISOs
 
@@ -312,11 +318,17 @@ class Starset(Objectset):
         self.times = np.linspace(0, self.time.value, self.timesteps) * self.time.unit
 
         if self.integrated is False:
-            self.orbits.integrate(self.times, MWPotential2014)
+            if heating is True:
+                #dyn_fric = dynamFric(GMs=100*u.Msun, rhm=5.*u.kpc, dens=MWPotential2014)
+                cdf= ChandrasekharDynamicalFrictionForce(GMs=100000000000*u.Msun,rhm=5.*u.kpc,
+                                             dens=MWPotential2014)
+                self.orbits.integrate(self.times, MWPotential2014 + cdf)
+            else:
+                self.orbits.integrate(self.times, MWPotential2014)
 
         if self.has_isos is True:
             for isoset in self.isos:
-                isoset.integrate(self.time, self.timesteps)
+                isoset.integrate(self.time, self.timesteps, heating = heating)
 
         self.integrated = True
     
@@ -558,7 +570,7 @@ class ISOset(Objectset):
         self.orbits = self.__get_orbits__()
         self.integrated = False
 
-    def integrate(self, time=5*u.Gyr, timesteps = 500):
+    def integrate(self, time=5*u.Gyr, timesteps = 500, heating = False):
         """
             Integrate the orbits of the ISOs.
 
@@ -571,7 +583,13 @@ class ISOset(Objectset):
         self.timesteps=timesteps
         self.times = np.linspace(0, self.time.value, self.timesteps) * self.time.unit
         if self.integrated is False:
-            self.orbits.integrate(self.times, MWPotential2014)
+            if heating is True:
+                #dyn_fric = dynamFric(GMs=100*u.Msun, rhm=5.*u.kpc, dens=MWPotential2014)
+                cdf= ChandrasekharDynamicalFrictionForce(GMs=10000000000*u.Msun,rhm=5.*u.kpc,
+                                dens=MWPotential2014)
+                self.orbits.integrate(self.times, MWPotential2014 + cdf)
+            else:
+                self.orbits.integrate(self.times, MWPotential2014)
         self.integrated = True
 
     def plot_ejection_velocities(self):
