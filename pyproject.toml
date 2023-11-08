@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "interlo"
-version = "1.1.0"
+version = "1.1.1"
 classifiers = ["Programming Language :: Python"]
 dependencies = ["matplotlib","numpy","galpy","astropy"]
 requires-python = ">=3"
